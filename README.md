@@ -19,8 +19,8 @@ Sorting and Limiting Results – Retrieving specific records like the second-hig
 Conditional Updates – Assigning departments using the CASE statement.
 
 By the end of this script, you’ll have a working understanding of:
-✅ How to create and modify databases and tables
-✅ How to use transactions and savepoints effectively
-✅ How to perform calculations and filtering using SQL queries
+How to create and modify databases and tables and 
+How to use transactions and savepoints effectively and
+How to perform calculations and filtering using SQL queries
 
 This project serves as a complete SQL learning exercise, combining basic CRUD operations, schema modification, and transaction management in one cohesive example.
