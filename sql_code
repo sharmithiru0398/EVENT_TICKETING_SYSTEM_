@@ -1,36 +1,33 @@
-create database companyy;
-use companyy;
-create table employee(emp_id int,emp_name varchar (15), emp_salary int);
-desc employee;
-insert into employee values (1,"arun",10000),
-(2,"rikshi",20000),
-(3,"vijay",30000),
-(4,"sharmi",40000);
-select*from employee;
-update employee set emp_name = "ezhil" where emp_id = 4;
-alter table employee add email varchar (20); 
-alter table employee drop email;
-select @@autocommit;
-set autocommit = off;
-commit;
-delete from employee where emp_id = 4;
-savepoint sp4;
-delete from employee where emp_id = 3;
-savepoint sp3;
-
-rollback to sp4;
-select max(emp_salary) from employee;
-select min(emp_salary) from employee;	
-select avg(emp_salary) from employee;
-select count(emp_salary) from employee;
-select sum(emp_salary) from employee;
-select * from employee order by emp_salary desc limit 1 offset 1;
-select*from employee;
-alter table employee add dep varchar (20);
-update employee set dep = case
-when emp_id = 1 then "hr"
-when emp_id = 2 then "sql_dev"
-else "unknow" 
-end;
-
-
+create database eventticketing1;
+use eventticketing1;
+create table events1(eventid int  primary key,eventname varchar(50),
+eventdate date,venue varchar(100),totalseats int, ticketprice decimal (10,2));
+select * from events1;
+insert into events1 values(1,"rock concert","2025-11-20","chennai stadium",25,"1.2"),
+(2,"tech expo 2025","2025-11-21","banglore convention center",30,"2.2"),
+(3,"cricket match","2025-11-23","mumbai wankhede stadium",35,"3.3"),
+(4,"music feast 2025","2025-11-24","royal gardens",45,"4.4"),
+(5,"food carnival 2025","2025-11-25","grand palace hall",55,"1.5");
+select * from events1;
+create table tickets(ticketid int primary key,eventid int,tickettype varchar(50),price int,quantityavailable int);
+select * from tickets;
+insert into tickets values (001,01,"vip",3000,100),(002,02,"Regular",1500,300),(003,03,"entry",500,400),
+(004,04,"premium",2000,200),(005,5,"delux",2200,50);
+select * from tickets;
+create table customers(customerid int primary key,firstname varchar(50),lastname varchar(50),email varchar(150),
+phone int,address varchar(200));
+select * from customers;
+insert into customers values(11,"sharmi","thiru","sharmithiru03@gmail.com",63694569,"thanjavur"),
+(12,"janani","palani","jananipalani12@gmail.com",71625432,"nagapattinam"),
+(13,"priya","srinivasan","priyasrini11@gmail.com",69852347,"kumbakonam"),
+(14,"mythi","kumar","mythikumar14@gmail.com",91758462,"thiruvannamalai"),
+(15,"priya","shankar","priyashankar18@gmail.com",7456218,"thiruvarur"); 
+select * from customers;
+create table reservations (reservationid int primary key,customerid int,ticketid int,quantity int,reservationdate date,
+foreign key (customerid) references customers(customerid),foreign key (ticketid) references tickets(ticketid));
+select * from reservations;
+insert into reservations (reservationid,customerid,ticketid,quantity,reservationdate)values
+(1001,1,801,10,"2025-11-10"),(1012,2,802,15,"2025-11-11"),
+(1023,3,803,20,"2025-11-12"),
+(1034,4,804,25,"2025-11-13"),(1045,5,805,30,"2025-11-14");
+select * from reservations;
