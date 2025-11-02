@@ -1,33 +1,159 @@
-create database eventticketing1;
-use eventticketing1;
-create table events1(eventid int  primary key,eventname varchar(50),
-eventdate date,venue varchar(100),totalseats int, ticketprice decimal (10,2));
-select * from events1;
-insert into events1 values(1,"rock concert","2025-11-20","chennai stadium",25,"1.2"),
-(2,"tech expo 2025","2025-11-21","banglore convention center",30,"2.2"),
-(3,"cricket match","2025-11-23","mumbai wankhede stadium",35,"3.3"),
-(4,"music feast 2025","2025-11-24","royal gardens",45,"4.4"),
-(5,"food carnival 2025","2025-11-25","grand palace hall",55,"1.5");
-select * from events1;
-create table tickets(ticketid int primary key,eventid int,tickettype varchar(50),price int,quantityavailable int);
+create database eventticketing2;
+use eventticketing2;
+create table eventcategories(categoryid int primary key,categoryname varchar(50));
+insert into eventcategories (categoryid,categoryname)values
+(1,"music"),(2,"sports"),(3,"theatre"),(4,"comedy");
+select * from eventcategories;
+create table events (eventid int primary key,eventname varchar(100),categoryid int,location varchar(100),eventdate date, 
+foreign key (categoryid) references eventcategories(categoryid));
+insert into events (eventid,eventname,categoryid,location,eventdate) values
+(101,"AR Rahman live concert",1,"chenni","2025-12-10"),
+(102,"IPL final match",2,"mumbai","2025-05-10"),
+(103,"Drama-ponniyin selvan",3,"coimbatore","2025-06-10"),
+(104,"standup comedy night",4,"Banglore","2025-04-25");
+select * from events;
+create table tickets(ticketid int primary key,eventid int,price decimal(10,2),seatcategory varchar (50),availability int,
+foreign key (eventid) references events(eventid));
+insert into tickets (ticketid,eventid,price,seatcategory,availability) values 
+(201,101,1500.00,"vip",200),
+(202,102,2500.00,"premium",300),
+(203,103,1000.00,"regular",150),
+(204,104,800.00,"balcony",100);
 select * from tickets;
-insert into tickets values (001,01,"vip",3000,100),(002,02,"Regular",1500,300),(003,03,"entry",500,400),
-(004,04,"premium",2000,200),(005,5,"delux",2200,50);
-select * from tickets;
-create table customers(customerid int primary key,firstname varchar(50),lastname varchar(50),email varchar(150),
+create table customers(customerid int primary key,customername varchar(50),email varchar(150),
 phone int,address varchar(200));
 select * from customers;
-insert into customers values(11,"sharmi","thiru","sharmithiru03@gmail.com",63694569,"thanjavur"),
-(12,"janani","palani","jananipalani12@gmail.com",71625432,"nagapattinam"),
-(13,"priya","srinivasan","priyasrini11@gmail.com",69852347,"kumbakonam"),
-(14,"mythi","kumar","mythikumar14@gmail.com",91758462,"thiruvannamalai"),
-(15,"priya","shankar","priyashankar18@gmail.com",7456218,"thiruvarur"); 
+insert into customers values(11,"sharmi","sharmithiru03@gmail.com",63694569,"thanjavur"),
+(12,"janani","jananipalani12@gmail.com",71625432,"nagapattinam"),
+(13,"priya","priyasrini11@gmail.com",69852347,"kumbakonam"),
+(14,"mythi","mythikumar14@gmail.com",91758462,"thiruvannamalai"); 
 select * from customers;
 create table reservations (reservationid int primary key,customerid int,ticketid int,quantity int,reservationdate date,
 foreign key (customerid) references customers(customerid),foreign key (ticketid) references tickets(ticketid));
 select * from reservations;
 insert into reservations (reservationid,customerid,ticketid,quantity,reservationdate)values
-(1001,1,801,10,"2025-11-10"),(1012,2,802,15,"2025-11-11"),
-(1023,3,803,20,"2025-11-12"),
-(1034,4,804,25,"2025-11-13"),(1045,5,805,30,"2025-11-14");
+(1001,11,201,2,"2025-11-10"),(1002,12,202,3,"2025-11-11"),
+(1003,13,203,2,"2025-11-12"),
+(1004,14,204,5,"2025-11-13");
 select * from reservations;
+create table sales(saleid int primary key, reservationid int, totalamount decimal(10.2),saledate date,paymentmethod varchar(50),
+foreign key(reservationid) references reservations(reservationid));
+select * from sales;
+insert into sales (saleid,reservationid,totalamount,saledate,paymentmethod) values
+(501,1001,3000.00,"2025-11-10","Credit card"),
+(502,1002,7500.00,"2025-11-11","UPI"),
+(503,1003,2000.00,"2025-11-12","Net banking"),
+(504,1004,4000.00,"2025-11-13","Cash");
+select * from sales;
+
+-- view
+
+create view reservationdetails as
+select
+r.reservationid,
+c.customername,
+e.eventname,
+t.seatcategory,
+r.quantity,
+s.totalamount,
+s.paymentmethod
+from reservations r
+join customers c on r.customerid = c.customerid
+join tickets t on r.ticketid = t.ticketid
+join events e on t.eventid = e.eventid
+join sales s on s.reservationid = r.reservationid;
+select * from reservationdetails;
+
+-- subquery
+
+select customername
+from customers
+where customerid in (select r.customerid from reservations r join tickets t on r.ticketid = t.ticketid
+where t.price > (select avg(price) from tickets));
+
+-- joins
+
+select e.eventname,c.customername,r.quantity,r.reservationdate
+from reservations  r 
+join customers c on r.customerid = c.customerid
+join tickets t on r.ticketid = t.ticketid
+join events e on t.eventid = e.eventid;
+
+
+--- trigger
+
+delimiter //
+create trigger update_ticket_availability
+after insert on reservations 
+for each row
+begin
+update tickets
+set availability = availability - new . quantity
+where ticketid = new.ticketid;
+end //
+delimiter ;
+
+
+-- stored procedure
+
+delimiter //
+create procedure addsale(in p_reservationid int,
+in p_paymentmethod varchar(50))
+begin
+declare v_quantity int;
+declare v_price decimal(10,2);
+declare v_total decimal(10,2);
+
+select r.quantity, t.price
+into v_quantity,v_price
+from reservations r
+join tickets t on r.ticketid = t.ticketid
+where r.reservationid = p_reservationid;
+set v_total = v_quantity * v_price;
+insert into sales (saleid,reservationid,totalamount,saledate,paymentmethod)
+values((select ifnull(max(saleid),500) + 1 from sales),
+p_reservationid, v_total,curdate(),p_paymentmethod);
+end //
+delimiter ;
+
+select * from eventcategories;
+select * from events;
+select * from tickets;
+select * from customers;
+select * from reservations;
+select * from sales;
+select * from reservationdetails; 
+
+
+-- group by and order by
+
+
+select
+e.eventname,
+count(t.ticketid) as
+total_ticket_types,
+sum(t.availability) as
+total_tickets_available
+from events e
+join tickets t on e.eventid = t.eventid
+group by e.eventname
+order by total_tickets_available desc;
+
+--- alter
+
+alter table events add organizer varchar(100);
+select * from events;
+
+-- update
+
+update events set organizer = case eventid
+when 101 then "km musicals pvt ltd"
+when 102 then "bcci"
+when 103 then "broadway theatre group"
+when 104 then "laugh factory enteraintment"
+end;
+select * from events;
+
+
+
+
